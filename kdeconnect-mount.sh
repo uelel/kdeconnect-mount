@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ANDROID_USER="kdeconnect"
-ANDROID_HOST=""
-ANDROID_PORT=""
+ANDROID_HOST="" # Fill in host IP address: mount | grep kdeconnect
+ANDROID_PORT="" # Fill in port: nmap -p- $ANDOID_HOST
 ANDROID_DIR="/storage/emulated/0"
 SSH_KEY="$HOME/.config/kdeconnect/privateKey.pem"
 
