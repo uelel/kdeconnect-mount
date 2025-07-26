@@ -110,7 +110,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Mounting the Android device at $MOUNT_PATH"
-sshfs -o rw,nosuid,nodev,identityfile="$SSH_KEY",port="$ANDROID_PORT",uid=$(id -u),gid=$(id -g),allow_other "$ANDROID_USER@$ANDROID_HOST:$ANDROID_DIR" "$MOUNT_PATH"
+sshfs -o rw,nosuid,nodev,reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,identityfile="$SSH_KEY",port="$ANDROID_PORT",uid=$(id -u),gid=$(id -g),allow_other "$ANDROID_USER@$ANDROID_HOST:$ANDROID_DIR" "$MOUNT_PATH"
 
 # Check if the mount was successful
 if [ $? -ne 0 ]; then
