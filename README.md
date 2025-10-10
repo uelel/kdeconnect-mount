@@ -36,8 +36,15 @@ fusermount -u <mount_path>
 
 ## 🚀 Improvement Suggestions
 
-1. Auto-detect Android Host & Port – Remove the need for manual input.
-2. Expand OS Support – Improve compatibility with more Linux distributions and Windows.
+Expand OS Support – Improve compatibility with more Linux distributions and Windows.
+
+
+## 🗂️ Versioning
+
+| Version | Date         | Changes                                   |
+|---------|-------------|-------------------------------------------|
+| 1.1.0   | October 2025  | Automatic detection of host and port     |
+| 1.0.0   | April 2025  | Initial release                            |
 
 
 ## 📝 License
