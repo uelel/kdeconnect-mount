@@ -1,8 +1,6 @@
 #!/bin/bash
 
 ANDROID_USER="kdeconnect"
-ANDROID_HOST="" # Fill in host IP address: mount | grep kdeconnect
-ANDROID_PORT="" # Fill in port: nmap -p- $ANDOID_HOST
 ANDROID_DIR="/storage/emulated/0"
 SSH_KEY="$HOME/.config/kdeconnect/privateKey.pem"
 
@@ -13,9 +11,9 @@ usage() {
 }
 
 # Check if required utilities are installed
-for cmd in kdeconnect-cli sshfs qdbus; do
+for cmd in kdeconnect-cli sshfs qdbus mount ss; do
   if ! command -v "$cmd" &> /dev/null; then
-    echo "Error: Required utility '$cmd' is not installed or not available in PATH."
+    echo "Error: Required utility '$cmd' is not installed or not available in PATH." >&2
     exit 1
   fi
 done
@@ -51,11 +49,11 @@ done
 # Ensure either device ID or device name is provided
 # Ensure mount path is provided
 if [ -z "$DEVICE_ID" ] && [ -z "$DEVICE_NAME" ]; then
-  echo "Error: Either -d <device_id> or -n <device_name> must be provided."
+  echo "Error: Either -d <device_id> or -n <device_name> must be provided." >&2
   usage
 fi
 if [ -z "$MOUNT_PATH" ]; then
-  echo "Error: Mount path is required."
+  echo "Error: Mount path is required." >&2
   usage
 fi
 
@@ -82,7 +80,7 @@ if [ -n "$DEVICE_NAME" ]; then
   done <<< "$DEVICE_LIST"
 
   if [ -z "$DEVICE_ID" ]; then
-    echo "Error: No ID found for device name '$DEVICE_NAME'. Ensure the device is paired and reachable."
+    echo "Error: No ID found for device name '$DEVICE_NAME'. Ensure the device is paired and reachable." >&2
     exit 1
   fi
 
@@ -92,12 +90,12 @@ fi
 
 # Check if qdbus is available
 if ! command -v qdbus &> /dev/null; then
-  echo "Error: qdbus is not installed or not available in PATH."
+  echo "Error: qdbus is not installed or not available in PATH." >&2
   exit 1
 fi
 # Check if kdeconnect service is available
 if ! qdbus org.kde.kdeconnect &> /dev/null; then
-  echo "Error: kdeconnect service is not running or not available."
+  echo "Error: kdeconnect service is not running or not available." >&2
   exit 1
 fi
 
@@ -105,7 +103,24 @@ fi
 echo "Activating SFTP service for device ID: $DEVICE_ID"
 qdbus org.kde.kdeconnect "/modules/kdeconnect/devices/$DEVICE_ID/sftp" org.kde.kdeconnect.device.sftp.mount
 if [ $? -ne 0 ]; then
-  echo "Error: Failed to activate SFTP service for device $DEVICE_ID."
+  echo "Error: Failed to activate SFTP service for device $DEVICE_ID." >&2
+  exit 1
+fi
+
+# Get mount IP address for given device
+sleep 5s
+mount_line=$(mount | grep kdeconnect | grep "$DEVICE_ID")
+if [[ -n "$mount_line" ]]; then
+  ANDROID_HOST=$(echo "$mount_line" | sed -n 's/.*kdeconnect@\([0-9.]*\):.*/\1/p')
+else
+  echo "No mount entry found for DEVICE_ID=$DEVICE_ID. Has SFTP service been activated?" >&2
+  exit 1
+fi
+
+# Get mount port for given host
+ANDROID_PORT=$(ss -tnp | grep "$ANDROID_HOST" | grep ssh | awk '{print $5}' | cut -d: -f2)
+if [[ -z "$ANDROID_PORT" ]]; then
+  echo "Error: Could not detect SFTP port for $ANDROID_HOST" >&2
   exit 1
 fi
 
@@ -114,7 +129,7 @@ sshfs -o rw,nosuid,nodev,identityfile="$SSH_KEY",port="$ANDROID_PORT",uid=$(id -
 
 # Check if the mount was successful
 if [ $? -ne 0 ]; then
-  echo "Error: Failed to mount the Android filesystem."
+  echo "Error: Failed to mount the Android filesystem." >&2
   exit 1
 fi
 
