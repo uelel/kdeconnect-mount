@@ -6,12 +6,14 @@ SSH_KEY="$HOME/.config/kdeconnect/privateKey.pem"
 
 # Function to show usage
 usage() {
-  echo "Usage: $0 (-d <device_id> | -n <device_name>) <mount_path>"
+  echo "Usage:"
+  echo "  $0 (-d <device_id> | -n <device_name>) <mount_path>"
+  echo "  $0 --unmount <mount_path>"
   exit 1
 }
 
 # Check if required utilities are installed
-for cmd in kdeconnect-cli sshfs qdbus mount ss; do
+for cmd in kdeconnect-cli sshfs qdbus mount ss fusermount mountpoint; do
   if ! command -v "$cmd" &> /dev/null; then
     echo "Error: Required utility '$cmd' is not installed or not available in PATH." >&2
     exit 1
@@ -22,6 +24,7 @@ done
 DEVICE_ID=""
 DEVICE_NAME=""
 MOUNT_PATH=""
+UNMOUNT=false
 if [[ "$#" -lt 2 ]]; then
   usage
 fi
@@ -35,6 +38,11 @@ while [[ "$#" -gt 0 ]]; do
       DEVICE_NAME="$2"
       shift 2
       ;;
+    --unmount)
+      UNMOUNT=true
+      MOUNT_PATH="$2"
+      shift 2
+      ;;
     *)
       if [ -z "$MOUNT_PATH" ]; then
         MOUNT_PATH="$1"
@@ -45,6 +53,31 @@ while [[ "$#" -gt 0 ]]; do
       ;;
   esac
 done
+
+# Unmount mode
+if $UNMOUNT; then
+  if [ -z "$MOUNT_PATH" ]; then
+    echo "Error: Mount path is required." >&2
+    usage
+  fi
+
+  echo "Unmounting $MOUNT_PATH..."
+
+  if ! mountpoint -q "$MOUNT_PATH"; then
+    echo "Error: '$MOUNT_PATH' is not a mounted filesystem." >&2
+    exit 1
+  fi
+
+  fusermount -u "$MOUNT_PATH"
+
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to unmount '$MOUNT_PATH'." >&2
+    exit 1
+  fi
+
+  echo "Successfully unmounted '$MOUNT_PATH'."
+  exit 0
+fi
 
 # Ensure either device ID or device name is provided
 # Ensure mount path is provided
