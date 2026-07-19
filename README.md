@@ -30,7 +30,7 @@ Example:
 To unmount, use:
 
 ```bash
-fusermount -u <mount_path>
+./kdeconnect-mount.sh --unmount <mount_path>
 ```
 
 
@@ -43,6 +43,7 @@ Expand OS Support – Improve compatibility with more Linux distributions and Wi
 
 | Version | Date         | Changes                                   |
 |---------|-------------|-------------------------------------------|
+| 1.1.1   | July 2026  | Unmount flag     |
 | 1.1.0   | October 2025  | Automatic detection of host and port     |
 | 1.0.0   | April 2025  | Initial release                            |
 
