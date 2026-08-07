@@ -120,6 +120,11 @@ if [ -n "$DEVICE_NAME" ]; then
   echo "Resolved device name '$DEVICE_NAME' to ID: $DEVICE_ID"
 fi
 
+# If the filesystem is already mounted, nothing to do
+if mountpoint -q "$MOUNT_PATH"; then
+    echo "Already mounted at $MOUNT_PATH"
+    exit 0
+fi
 
 # Check if qdbus is available
 if ! command -v qdbus &> /dev/null; then
